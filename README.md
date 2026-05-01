@@ -1,113 +1,125 @@
+<div align="center">
+
 # ✦ Gemini Logo Remover
 
-> Automatically removes the **Gemini AI watermark** from images and reconstructs the background so cleanly that no one can tell it was ever there.
+### Remove the Gemini AI watermark from any image — instantly, for free, no cloud needed.
 
-**Free • Local • No API keys • No cloud • Runs on your machine**
+![Python](https://img.shields.io/badge/Python-3.10+-blue?style=flat-square&logo=python)
+![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
+![No API Key](https://img.shields.io/badge/API%20Key-Not%20Required-brightgreen?style=flat-square)
+![Runs Locally](https://img.shields.io/badge/Runs-100%25%20Locally-purple?style=flat-square)
+
+</div>
 
 ---
 
 ## What it does
 
-When you generate images with Google Gemini, a small sparkle logo `✦` appears in the bottom-right corner. This tool detects and removes it, then fills the background back — perfectly.
-
-| Before | After |
-|--------|-------|
-| Image with Gemini logo in corner | Clean image, logo gone, background intact |
+When you generate images with Google Gemini, a sparkle logo **✦** appears in the bottom-right corner. This tool automatically detects and removes it — then fills the background so naturally that **no one can tell the logo was ever there.**
 
 ---
 
-## Setup ( 3 commands )
+## Live Preview
+
+![Gemini Logo Remover UI](assets/screenshot.png)
+
+> **Upload → Remove Logo → Download.** Done in under 1 second.
+
+---
+
+## Setup ( 3 commands, copy & paste )
 
 ```bash
-# 1. Download the project
 git clone https://github.com/tanmoymondal1312/Gemini-Logo-Remover.git
 cd Gemini-Logo-Remover
-
-# 2. Install all dependencies at once
 pip install -r requirements.txt
-
-# 3. Run the web app
-python server.py
 ```
 
-Then open your browser and go to → **http://localhost:8000**
-
-That's it. Drag your image, click **Remove Logo**, download the result.
+> **Requires Python 3.10+** — works on Windows, macOS, and Linux. No GPU needed.
 
 ---
 
-## Ways to use it
-
-### Option A — Web App (recommended, easiest)
+## Run it
 
 ```bash
 python server.py
 ```
 
-Open **http://localhost:8000** in your browser.  
-Drag & drop your image → pick a method → click **Remove Logo** → download.
+Then open **http://localhost:8000** in your browser.
 
 ---
 
-### Option B — Command Line
+## How to use
+
+### Web App — easiest
+
+1. Run `python server.py`
+2. Open **http://localhost:8000**
+3. Drag your image onto the page
+4. Click **Remove Logo**
+5. Download the clean image
+
+---
+
+### Command Line
 
 ```bash
 # Remove logo from one image
 python cli.py photo.jpg
 
-# Specify output file
-python cli.py photo.jpg --output clean_photo.jpg
+# Save to a specific file
+python cli.py photo.jpg --output clean.jpg
 
-# Process a whole folder at once
+# Process an entire folder
 python cli.py ./my_images/ --batch --output ./cleaned/
 
-# Also save the detection mask (see exactly what was removed)
+# Also save the detection mask
 python cli.py photo.jpg --save-mask
 ```
 
-The cleaned image is saved as `photo_clean.jpg` by default.
+The cleaned image is saved as `photo_clean.jpg` automatically.
 
 ---
 
-### Option C — Python code
+### Python code
 
 ```python
 from core import remove_file
 
-# Remove logo and save result
-remove_file("photo.jpg", "photo_clean.jpg")
+# Simplest usage
+remove_file("photo.jpg", "clean.jpg")
 ```
 
 ```python
-# More control
+# With options
 from core import remove_file
 
 remove_file(
     "photo.jpg",
-    "photo_clean.jpg",
-    method="auto",   # see methods table below
-    feather=4        # how soft the edges are (0–20)
+    "clean.jpg",
+    method="auto",  # auto, gradient, biharmonic, telea, ns, lama
+    feather=4       # edge softness: 0 = sharp, 20 = very soft
 )
 ```
 
 ```python
-# Work with image bytes (useful in web apps / APIs)
+# Works with image bytes too (for web apps / APIs)
 from core import remove
 
 with open("photo.jpg", "rb") as f:
-    clean_bytes = remove(f.read())
+    result = remove(f.read())
 
 with open("clean.jpg", "wb") as f:
-    f.write(clean_bytes)
+    f.write(result)
 ```
 
 ```python
-# Work with OpenCV arrays
+# Works with OpenCV arrays
 import cv2
 from core import remove_array
 
-image = cv2.imread("photo.jpg")
-result, mask = remove_array(image)
+img = cv2.imread("photo.jpg")
+result, mask = remove_array(img)
 cv2.imwrite("clean.jpg", result)
 ```
 
@@ -115,75 +127,70 @@ cv2.imwrite("clean.jpg", result)
 
 ## Inpainting methods
 
-The tool fills the removed logo area using one of these methods.  
-**`auto` is the default** — it picks the best one available automatically.
+The tool uses these methods to fill the area where the logo was.
+**`auto` (default) always picks the best one for you.**
 
-| Method | Quality | Speed | When to use |
-|--------|---------|-------|-------------|
-| `auto` | Best available | — | Always start here (default) |
-| `lama` | ⭐⭐⭐⭐⭐ | Slow | Best quality, complex backgrounds (needs extra install) |
-| `biharmonic` | ⭐⭐⭐⭐ | Medium | Smooth fill, no extra install needed |
-| `gradient` | ⭐⭐⭐⭐ | Fast | Solid colours, gradients, blurred backgrounds |
-| `telea` | ⭐⭐⭐ | Fast | General purpose, always available |
+| Method | Quality | Speed | Best for |
+|--------|:-------:|:-----:|----------|
+| `auto` | Best available | — | Everything — just use this |
+| `lama` | ⭐⭐⭐⭐⭐ | ~2s | Complex backgrounds, photos (needs extra install) |
+| `biharmonic` | ⭐⭐⭐⭐ | ~1s | Smooth fill, works out of the box |
+| `gradient` | ⭐⭐⭐⭐ | Fast | Solid colors, gradients, blurred backgrounds |
+| `telea` | ⭐⭐⭐ | Fast | General use |
 | `ns` | ⭐⭐⭐ | Fast | Smooth gradient backgrounds |
-| `patch` | ⭐⭐ | Fast | Last resort fallback |
+| `patch` | ⭐⭐ | Fast | Last-resort fallback |
 
-### Want the best possible quality? Install LaMa:
+### Want the absolute best quality? Install LaMa (optional):
 
 ```bash
 pip install simple-lama-inpainting
 ```
 
-Then use `method="lama"` or just leave it on `auto` — it will use LaMa automatically.  
-*(Downloads a ~200 MB model file on first run, then it's cached forever.)*
+Leave the method on `auto` — it will use LaMa automatically from that point on.
+*(Downloads a ~200 MB model on first run. Cached after that.)*
 
 ---
 
-## Project structure
+## Project layout
 
 ```
 Gemini-Logo-Remover/
 │
 ├── core/
 │   ├── detector.py     ← finds the Gemini logo in the image
-│   ├── inpainter.py    ← fills the logo area with background
-│   └── remover.py      ← connects detection + inpainting
+│   ├── inpainter.py    ← fills the gap with realistic background
+│   └── remover.py      ← ties detection + inpainting together
 │
-├── server.py           ← web app  (python server.py)
-├── cli.py              ← command line  (python cli.py photo.jpg)
-├── app.py              ← Gradio UI alternative
+├── assets/
+│   └── screenshot.png  ← UI preview (used in this README)
+│
 ├── static/
-│   └── index.html      ← the web page served by server.py
-├── requirements.txt    ← all dependencies in one file
+│   └── index.html      ← the web page
+│
+├── server.py           ← start the web app
+├── cli.py              ← command-line tool
+├── requirements.txt    ← all dependencies (one pip command)
 └── README.md
 ```
 
 ---
 
-## Requirements
-
-- Python 3.10 or newer
-- Works on Windows, macOS, Linux
-- No GPU needed (CPU is fine)
-
----
-
 ## Common questions
 
-**The logo was not detected — what do I do?**  
-The tool falls back to a fixed corner region automatically, so it still works. Try increasing `--feather` for a larger blend zone: `python cli.py photo.jpg --feather 8`
+**The logo wasn't detected — what now?**
+The tool has a built-in fallback that still covers the corner region. Try `--feather 8` for a larger blend zone.
 
-**The background looks slightly off after removal?**  
-Switch to a better method: `python cli.py photo.jpg --method gradient` (great for solid/gradient backgrounds) or install LaMa for the best results.
+**The background still looks a bit off?**
+Switch to `--method gradient` (great for solid/gradient backgrounds) or install LaMa for the best possible result.
 
-**Can I use this in my own Python project?**  
-Yes. `from core import remove_file` — see the Python code examples above.
+**Does this send my images to any server?**
+No. Everything runs 100% on your machine. No internet connection needed after setup.
 
-**Does this send my images anywhere?**  
-No. Everything runs 100% locally on your machine. No internet required after setup.
+**Can I use this in my own project?**
+Yes — MIT license. `from core import remove_file` and you're done.
 
 ---
 
 ## License
 
-MIT — free to use, modify, and distribute.
+[MIT](LICENSE) — free to use, modify, and share.
