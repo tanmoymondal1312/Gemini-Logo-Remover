@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gemini Logo Remover</title>
+  <style>
+    /* ── Reset & base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --surface2:  #242736;
+      --border:    #2e3147;
+      --accent:    #6c63ff;
+      --accent2:   #a78bfa;
+      --text:      #e2e8f0;
+      --muted:     #7c849a;
+      --success:   #22c55e;
+      --danger:    #ef4444;
+      --radius:    14px;
+      --shadow:    0 4px 24px rgba(0,0,0,.45);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ──────────────────────────────────────────────── */
+    header {
+      text-align: center;
+      padding: 2.4rem 1rem 1.2rem;
+      background: linear-gradient(160deg, #1a1d27 0%, #0f1117 100%);
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 700;
+      background: linear-gradient(135deg, #818cf8, #c084fc, #67e8f9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -.02em;
+    }
+    header p {
+      margin-top: .4rem;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    /* ── Main layout ─────────────────────────────────────────── */
+    main {
+      flex: 1;
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1rem 3rem;
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+    }
+
+    /* ── Upload zone ─────────────────────────────────────────── */
+    #drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: .75rem;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      padding: 2rem;
+      position: relative;
+    }
+    #drop-zone:hover, #drop-zone.drag-over {
+      border-color: var(--accent);
+      background: rgba(108,99,255,.06);
+    }
+    #drop-zone svg { opacity: .5; }
+    #drop-zone p { color: var(--muted); font-size: .95rem; text-align: center; }
+    #drop-zone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+    #file-name {
+      font-size: .8rem;
+      color: var(--accent2);
+      margin-top: .25rem;
+    }
+
+    /* ── Settings row ────────────────────────────────────────── */
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+    @media (max-width: 640px) {
+      .settings-grid { grid-template-columns: 1fr; }
+    }
+
+    label.field-label {
+      display: block;
+      font-size: .8rem;
+      color: var(--muted);
+      margin-bottom: .5rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    /* method radio pills */
+    .pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .4rem;
+    }
+    .pill-group input { display: none; }
+    .pill-group label {
+      padding: .35rem .85rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: .82rem;
+      cursor: pointer;
+      transition: all .15s;
+      color: var(--muted);
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 400;
+    }
+    .pill-group input:checked + label {
+      border-color: var(--accent);
+      background: rgba(108,99,255,.18);
+      color: #a78bfa;
+    }
+
+    /* feather slider */
+    input[type=range] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+    .slider-row span {
+      min-width: 2ch;
+      text-align: right;
+      font-size: .9rem;
+      color: var(--accent2);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Process button ──────────────────────────────────────── */
+    #process-btn {
+      width: 100%;
+      padding: .85rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, var(--accent), #a855f7);
+      color: #fff;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+    }
+    #process-btn:hover:not(:disabled) { opacity: .9; }
+    #process-btn:active:not(:disabled) { transform: scale(.98); }
+    #process-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* ── Spinner ─────────────────────────────────────────────── */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      display: none;
+    }
+    .spinner.active { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Status bar ──────────────────────────────────────────── */
+    #status {
+      font-size: .9rem;
+      min-height: 1.4em;
+      padding: .5rem .75rem;
+      border-radius: 8px;
+      display: none;
+    }
+    #status.info  { display: block; background: rgba(108,99,255,.15); color: var(--accent2); }
+    #status.ok    { display: block; background: rgba(34,197,94,.12);  color: var(--success); }
+    #status.error { display: block; background: rgba(239,68,68,.12);  color: var(--danger); }
+
+    /* ── Before / After viewer ───────────────────────────────── */
+    #result-section { display: none; }
+
+    .viewer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 700px) {
+      .viewer-grid { grid-template-columns: 1fr; }
+    }
+
+    .image-box {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #0a0b10;
+      position: relative;
+    }
+    .image-box img {
+      width: 100%;
+      height: auto;
+      display: block;
+      max-height: 480px;
+      object-fit: contain;
+    }
+    .image-box .badge {
+      position: absolute;
+      top: .6rem; left: .6rem;
+      background: rgba(0,0,0,.7);
+      color: #fff;
+      font-size: .72rem;
+      font-weight: 600;
+      padding: .2rem .55rem;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .image-box .badge.after { background: rgba(108,99,255,.75); }
+
+    /* ── Download row ────────────────────────────────────────── */
+    .download-row {
+      display: flex;
+      gap: .75rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+    .btn-dl {
+      padding: .55rem 1.25rem;
+      border-radius: 999px;
+      border: 1px solid var(--accent);
+      background: transparent;
+      color: var(--accent2);
+      font-size: .88rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .15s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+    }
+    .btn-dl:hover { background: rgba(108,99,255,.15); }
+
+    /* ── Progress bar ────────────────────────────────────────── */
+    #progress-wrap {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      display: none;
+    }
+    #progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), #a855f7);
+      transition: width .3s ease;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 1.25rem;
+      color: var(--muted);
+      font-size: .8rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Checboxes row ───────────────────────────────────────── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-size: .87rem;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .toggle-row input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
+
+    .meta-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      font-size: .8rem;
+      color: var(--muted);
+      margin-top: .5rem;
+    }
+    .meta-row span { display: flex; gap: .3rem; align-items: center; }
+    .meta-row b { color: var(--text); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>✦ Gemini Logo Remover</h1>
+  <p>Upload an image · remove the Gemini watermark · download the clean result</p>
+</header>
+
+<main>
+
+  <!-- Upload + settings card -->
+  <div class="card">
+    <!-- Drop zone -->
+    <div id="drop-zone">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12V4m0 0L9 7m3-3l3 3"/>
+      </svg>
+      <p><strong>Drag &amp; drop</strong> your image here<br>or <u>click to browse</u></p>
+      <p id="file-name">PNG · JPG · WEBP · up to 30 MB</p>
+      <input type="file" id="file-input" accept="image/png,image/jpeg,image/webp" />
+    </div>
+
+    <div style="height:1px; background:var(--border); margin:1.25rem 0;"></div>
+
+    <!-- Settings -->
+    <div class="settings-grid">
+      <div>
+        <label class="field-label">Inpainting Method</label>
+        <div class="pill-group">
+          <input type="radio" name="method" id="m-auto"       value="auto"       checked>
+          <label for="m-auto">Auto</label>
+          <input type="radio" name="method" id="m-lama"       value="lama">
+          <label for="m-lama">LaMa ✦</label>
+          <input type="radio" name="method" id="m-biharmonic" value="biharmonic">
+          <label for="m-biharmonic">Biharmonic</label>
+          <input type="radio" name="method" id="m-telea"      value="telea">
+          <label for="m-telea">TELEA</label>
+          <input type="radio" name="method" id="m-ns"         value="ns">
+          <label for="m-ns">NS</label>
+          <input type="radio" name="method" id="m-gradient"   value="gradient">
+          <label for="m-gradient">Gradient</label>
+          <input type="radio" name="method" id="m-patch"      value="patch">
+          <label for="m-patch">Patch</label>
+        </div>
+        <p style="font-size:.75rem; color:var(--muted); margin-top:.5rem;">
+          <b>Auto</b> picks the best available method.
+          <b>LaMa ✦</b> = AI model, best quality (~200 MB first run).
+          <b>Biharmonic</b> = smooth PDE fill, no neural net.
+          <b>Gradient</b> = perfect for solid/blurred backgrounds.
+          All classical methods use mirror-padding to fix corner artifacts.
+        </p>
+      </div>
+
+      <div>
+        <label class="field-label">Mask Feather</label>
+        <div class="slider-row">
+          <input type="range" id="feather" min="0" max="20" value="4" step="1">
+          <span id="feather-val">4</span> <span style="color:var(--muted); font-size:.8rem;">px</span>
+        </div>
+        <p style="font-size:.75rem; color:var(--muted); margin-top:.4rem;">
+          Higher = softer blend around the removed area.
+        </p>
+
+        <div style="margin-top:.9rem;">
+          <label class="toggle-row">
+            <input type="checkbox" id="show-mask" />
+            Show detection mask alongside result
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:1px; background:var(--border); margin:1.25rem 0;"></div>
+
+    <!-- Progress + button -->
+    <div id="progress-wrap"><div id="progress-bar"></div></div>
+    <div style="height:.5rem;"></div>
+
+    <button id="process-btn" disabled>
+      <div class="spinner" id="spinner"></div>
+      <svg id="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="3 6 5 2 21 2 19 6"/><path d="M21 6H3l1 14h16z"/>
+      </svg>
+      Remove Logo
+    </button>
+
+    <div id="status" style="margin-top:.75rem;"></div>
+  </div>
+
+  <!-- Result section -->
+  <div class="card" id="result-section">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+      <h2 style="font-size:1rem; font-weight:600;">Result</h2>
+      <div class="meta-row" id="meta-row"></div>
+    </div>
+
+    <div class="viewer-grid">
+      <div class="image-box">
+        <span class="badge">Before</span>
+        <img id="img-before" src="" alt="Original" />
+      </div>
+      <div class="image-box">
+        <span class="badge after">After</span>
+        <img id="img-after" src="" alt="Cleaned" />
+      </div>
+    </div>
+
+    <!-- Mask -->
+    <div id="mask-section" style="display:none; margin-top:1rem;">
+      <label class="field-label">Detection Mask</label>
+      <div class="image-box" style="max-width:340px;">
+        <img id="img-mask" src="" alt="Mask" />
+      </div>
+    </div>
+
+    <div class="download-row">
+      <a id="dl-btn" class="btn-dl" download="cleaned.png">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+        </svg>
+        Download PNG
+      </a>
+      <button class="btn-dl" id="reset-btn" style="border-color:var(--border); color:var(--muted);">
+        ↺ Process another
+      </button>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  All processing happens <strong>locally on your server</strong> — no image ever leaves your machine.
+</footer>
+
+<script>
+(function () {
+  const dropZone   = document.getElementById('drop-zone');
+  const fileInput  = document.getElementById('file-input');
+  const fileName   = document.getElementById('file-name');
+  const processBtn = document.getElementById('process-btn');
+  const spinner    = document.getElementById('spinner');
+  const btnIcon    = document.getElementById('btn-icon');
+  const status     = document.getElementById('status');
+  const progressWrap = document.getElementById('progress-wrap');
+  const progressBar  = document.getElementById('progress-bar');
+
+  const resultSection = document.getElementById('result-section');
+  const imgBefore   = document.getElementById('img-before');
+  const imgAfter    = document.getElementById('img-after');
+  const imgMask     = document.getElementById('img-mask');
+  const maskSection = document.getElementById('mask-section');
+  const dlBtn       = document.getElementById('dl-btn');
+  const metaRow     = document.getElementById('meta-row');
+  const featherSlider = document.getElementById('feather');
+  const featherVal    = document.getElementById('feather-val');
+  const resetBtn    = document.getElementById('reset-btn');
+
+  let selectedFile = null;
+  let resultURL    = null;
+
+  // ── Feather display ──────────────────────────────────────────
+  featherSlider.addEventListener('input', () => {
+    featherVal.textContent = featherSlider.value;
+  });
+
+  // ── File selection ───────────────────────────────────────────
+  function pickFile(file) {
+    if (!file || !file.type.startsWith('image/')) {
+      showStatus('error', 'Please select a valid image file (PNG / JPG / WEBP).');
+      return;
+    }
+    if (file.size > 30 * 1024 * 1024) {
+      showStatus('error', 'File is too large. Maximum size is 30 MB.');
+      return;
+    }
+    selectedFile = file;
+    fileName.textContent = `${file.name}  (${(file.size / 1024).toFixed(0)} KB)`;
+    processBtn.disabled = false;
+
+    // Show original preview in Before pane
+    const url = URL.createObjectURL(file);
+    imgBefore.src = url;
+    showStatus('info', `Ready — click "Remove Logo" to process.`);
+  }
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) pickFile(fileInput.files[0]);
+  });
+
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) pickFile(e.dataTransfer.files[0]);
+  });
+
+  // ── Process ──────────────────────────────────────────────────
+  processBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+
+    const method  = document.querySelector('input[name=method]:checked').value;
+    const feather = featherSlider.value;
+    const withMask = document.getElementById('show-mask').checked;
+
+    setLoading(true);
+    showStatus('info', 'Processing… this may take a few seconds.');
+    resultSection.style.display = 'none';
+    maskSection.style.display = 'none';
+
+    const form = new FormData();
+    form.append('image', selectedFile);
+    form.append('method', method);
+    form.append('feather', feather);
+
+    try {
+      if (withMask) {
+        // JSON path with mask
+        form.append('return_mask', 'true');
+        const t0 = performance.now();
+        const res = await fetchWithProgress('/api/remove', form);
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ detail: res.statusText }));
+          throw new Error(err.detail || 'Server error');
+        }
+
+        const data = await res.json();
+        const elapsed = data.elapsed_ms ?? Math.round(performance.now() - t0);
+
+        displayResult(
+          'data:image/png;base64,' + data.result,
+          data.elapsed_ms,
+          data.method,
+          method,
+        );
+        imgMask.src = 'data:image/png;base64,' + data.mask;
+        maskSection.style.display = 'block';
+
+      } else {
+        // Binary path (fastest)
+        const t0 = performance.now();
+        const res = await fetchWithProgress('/api/remove', form);
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ detail: res.statusText }));
+          throw new Error(err.detail || 'Server error');
+        }
+
+        const blob = await res.blob();
+        const elapsedMs = res.headers.get('X-Elapsed-Ms') ?? Math.round(performance.now() - t0);
+        const methodUsed = res.headers.get('X-Method') ?? method;
+
+        const url = URL.createObjectURL(blob);
+        displayResult(url, elapsedMs, methodUsed, method);
+      }
+
+    } catch (err) {
+      showStatus('error', '✖  ' + err.message);
+      setLoading(false);
+    }
+  });
+
+  function displayResult(url, elapsedMs, methodUsed, methodRequested) {
+    if (resultURL) URL.revokeObjectURL(resultURL);
+    resultURL = url;
+
+    imgAfter.src = url;
+    dlBtn.href = url;
+    dlBtn.download = selectedFile.name.replace(/\.[^.]+$/, '') + '_clean.png';
+
+    metaRow.innerHTML = `
+      <span>Method <b>${methodUsed}</b></span>
+      <span>Time <b>${elapsedMs} ms</b></span>
+    `;
+
+    resultSection.style.display = 'block';
+    showStatus('ok', `✓ Done in ${elapsedMs} ms using ${methodUsed}.`);
+    setLoading(false);
+
+    // Smooth scroll to result
+    resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── Reset ────────────────────────────────────────────────────
+  resetBtn.addEventListener('click', () => {
+    selectedFile = null;
+    fileInput.value = '';
+    fileName.textContent = 'PNG · JPG · WEBP · up to 30 MB';
+    processBtn.disabled = true;
+    resultSection.style.display = 'none';
+    status.className = '';
+    status.style.display = 'none';
+    imgBefore.src = '';
+    imgAfter.src = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ── Helpers ──────────────────────────────────────────────────
+  function setLoading(on) {
+    processBtn.disabled = on;
+    spinner.classList.toggle('active', on);
+    btnIcon.style.display = on ? 'none' : '';
+    progressWrap.style.display = on ? 'block' : 'none';
+    if (!on) progressBar.style.width = '0%';
+  }
+
+  function showStatus(type, msg) {
+    status.className = type;
+    status.textContent = msg;
+    status.style.display = 'block';
+  }
+
+  async function fetchWithProgress(url, formData) {
+    // Fake progress animation — XHR doesn't expose download progress for non-streamed binary
+    progressWrap.style.display = 'block';
+    let pct = 0;
+    const tick = setInterval(() => {
+      pct = Math.min(pct + Math.random() * 12, 85);
+      progressBar.style.width = pct + '%';
+    }, 200);
+
+    try {
+      const res = await fetch(url, { method: 'POST', body: formData });
+      clearInterval(tick);
+      progressBar.style.width = '100%';
+      return res;
+    } catch (e) {
+      clearInterval(tick);
+      throw e;
+    }
+  }
+})();
+</script>
+
+</body>
+</html>

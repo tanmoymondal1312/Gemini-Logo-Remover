@@ -1,0 +1,19 @@
+# ── Core (required) ────────────────────────────────────────────────────────
+opencv-python>=4.8.0        # detection + TELEA/NS inpainting + seamlessClone
+numpy>=1.24.0               # array ops
+Pillow>=10.0.0              # image I/O, PIL conversions
+
+# ── Web server (FastAPI) ────────────────────────────────────────────────────
+fastapi>=0.111.0            # async web framework
+uvicorn[standard]>=0.29.0   # ASGI server (auto-reload, workers)
+python-multipart>=0.0.9     # multipart/form-data file uploads
+
+# ── Biharmonic inpainting (high quality, no neural net) ────────────────────
+scikit-image>=0.21.0        # inpaint_biharmonic – smooth PDE-based fill
+
+# ── Gradio UI (optional – legacy app.py) ───────────────────────────────────
+# gradio>=4.0.0
+
+# ── Optional: deep-learning inpainting (best quality) ──────────────────────
+# Uncomment to enable the 'lama' method (downloads ~200 MB model on first run)
+# simple-lama-inpainting>=0.1.0
