@@ -3,25 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gemini Logo Remover</title>
+  <title>✦ Gemini Logo Remover</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* ── Reset & base ─────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0f1117;
-      --surface:   #1a1d27;
-      --surface2:  #242736;
-      --border:    #2e3147;
-      --accent:    #6c63ff;
+      --bg:        #080b12;
+      --surface:   #0f1320;
+      --surface2:  #181d2e;
+      --border:    #1e2438;
+      --border2:   #2a3150;
+      --accent:    #6366f1;
       --accent2:   #a78bfa;
-      --text:      #e2e8f0;
-      --muted:     #7c849a;
+      --accent3:   #67e8f9;
+      --text:      #e8eaf6;
+      --text2:     #9099b5;
       --success:   #22c55e;
       --danger:    #ef4444;
-      --radius:    14px;
-      --shadow:    0 4px 24px rgba(0,0,0,.45);
+      --warn:      #f59e0b;
+      --radius:    16px;
+      --radius-sm: 10px;
+      --glow:      0 0 40px rgba(99,102,241,.18);
     }
+
+    html { scroll-behavior: smooth; }
 
     body {
       background: var(--bg);
@@ -30,422 +38,753 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      background-image:
+        radial-gradient(ellipse 80% 40% at 50% -10%, rgba(99,102,241,.12) 0%, transparent 70%);
     }
 
-    /* ── Header ──────────────────────────────────────────────── */
+    /* ── Header ─────────────────────────────────────────────────── */
     header {
       text-align: center;
-      padding: 2.4rem 1rem 1.2rem;
-      background: linear-gradient(160deg, #1a1d27 0%, #0f1117 100%);
-      border-bottom: 1px solid var(--border);
+      padding: 2.8rem 1rem 1.6rem;
+      position: relative;
+    }
+    .header-sparkle {
+      font-size: 2rem;
+      display: inline-block;
+      animation: sparkle-pulse 3s ease-in-out infinite;
+      margin-bottom: .4rem;
+    }
+    @keyframes sparkle-pulse {
+      0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+      50%       { transform: scale(1.15) rotate(15deg); opacity: .85; }
     }
     header h1 {
-      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-size: clamp(1.8rem, 4.5vw, 2.8rem);
       font-weight: 700;
-      background: linear-gradient(135deg, #818cf8, #c084fc, #67e8f9);
+      background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #67e8f9 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      letter-spacing: -.02em;
+      letter-spacing: -.03em;
+      line-height: 1.1;
     }
     header p {
-      margin-top: .4rem;
-      color: var(--muted);
+      margin-top: .6rem;
+      color: var(--text2);
       font-size: .95rem;
     }
+    .header-badges {
+      display: flex;
+      gap: .5rem;
+      justify-content: center;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .badge-tag {
+      padding: .22rem .75rem;
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .badge-tag.free     { background: rgba(34,197,94,.15);  color: #4ade80; border: 1px solid rgba(34,197,94,.25); }
+    .badge-tag.local    { background: rgba(99,102,241,.15); color: #818cf8; border: 1px solid rgba(99,102,241,.25); }
+    .badge-tag.nokey    { background: rgba(167,139,250,.15);color: #c084fc; border: 1px solid rgba(167,139,250,.25); }
+    .badge-tag.fast     { background: rgba(103,232,249,.15);color: #67e8f9; border: 1px solid rgba(103,232,249,.25); }
 
-    /* ── Main layout ─────────────────────────────────────────── */
+    /* ── Main layout ─────────────────────────────────────────────── */
     main {
       flex: 1;
-      max-width: 1100px;
+      max-width: 1160px;
       width: 100%;
       margin: 0 auto;
-      padding: 2rem 1rem 3rem;
+      padding: 1.5rem 1rem 4rem;
       display: grid;
       gap: 1.5rem;
     }
 
+    /* ── Card ────────────────────────────────────────────────────── */
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 1.5rem;
-      box-shadow: var(--shadow);
+      box-shadow: var(--glow);
+      overflow: hidden;
+    }
+    .card-body { padding: 1.6rem; }
+    .card-header {
+      padding: 1rem 1.6rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .card-header svg { opacity: .6; }
+
+    /* ── Upload + settings two-column layout ────────────────────── */
+    .upload-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.4rem;
+    }
+    @media (max-width: 720px) {
+      .upload-layout { grid-template-columns: 1fr; }
     }
 
-    /* ── Upload zone ─────────────────────────────────────────── */
+    /* ── Drop zone ───────────────────────────────────────────────── */
     #drop-zone {
-      border: 2px dashed var(--border);
-      border-radius: var(--radius);
-      min-height: 200px;
+      border: 2px dashed var(--border2);
+      border-radius: var(--radius-sm);
+      min-height: 260px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: .75rem;
       cursor: pointer;
-      transition: border-color .2s, background .2s;
-      padding: 2rem;
+      transition: border-color .2s, background .2s, box-shadow .2s;
       position: relative;
+      overflow: hidden;
+      background: var(--surface2);
     }
     #drop-zone:hover, #drop-zone.drag-over {
       border-color: var(--accent);
-      background: rgba(108,99,255,.06);
+      background: rgba(99,102,241,.06);
+      box-shadow: 0 0 0 4px rgba(99,102,241,.1);
     }
-    #drop-zone svg { opacity: .5; }
-    #drop-zone p { color: var(--muted); font-size: .95rem; text-align: center; }
     #drop-zone input[type=file] {
-      position: absolute; inset: 0; opacity: 0; cursor: pointer;
-    }
-    #file-name {
-      font-size: .8rem;
-      color: var(--accent2);
-      margin-top: .25rem;
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; z-index: 2;
     }
 
-    /* ── Settings row ────────────────────────────────────────── */
-    .settings-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.25rem;
-    }
-    @media (max-width: 640px) {
-      .settings-grid { grid-template-columns: 1fr; }
-    }
-
-    label.field-label {
-      display: block;
-      font-size: .8rem;
-      color: var(--muted);
-      margin-bottom: .5rem;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-    }
-
-    /* method radio pills */
-    .pill-group {
+    /* ── Empty state ─────────────────────────────────────────────── */
+    .upload-empty {
       display: flex;
-      flex-wrap: wrap;
-      gap: .4rem;
-    }
-    .pill-group input { display: none; }
-    .pill-group label {
-      padding: .35rem .85rem;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      font-size: .82rem;
-      cursor: pointer;
-      transition: all .15s;
-      color: var(--muted);
-      text-transform: none;
-      letter-spacing: 0;
-      font-weight: 400;
-    }
-    .pill-group input:checked + label {
-      border-color: var(--accent);
-      background: rgba(108,99,255,.18);
-      color: #a78bfa;
-    }
-
-    /* feather slider */
-    input[type=range] {
-      width: 100%;
-      accent-color: var(--accent);
-      cursor: pointer;
-    }
-    .slider-row {
-      display: flex;
+      flex-direction: column;
       align-items: center;
       gap: .75rem;
+      padding: 2rem;
+      pointer-events: none;
     }
-    .slider-row span {
-      min-width: 2ch;
+    .upload-icon-wrap {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: rgba(99,102,241,.12);
+      border: 1.5px solid rgba(99,102,241,.25);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .upload-empty h3 {
+      font-size: .97rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .upload-empty p {
+      font-size: .82rem;
+      color: var(--text2);
+      text-align: center;
+    }
+    .upload-empty .browse-link {
+      color: var(--accent2);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    /* ── Preview state (image selected) ─────────────────────────── */
+    .upload-preview {
+      display: none;
+      width: 100%;
+      height: 100%;
+      min-height: 260px;
+      position: relative;
+    }
+    #drop-zone.has-image .upload-empty   { display: none; }
+    #drop-zone.has-image .upload-preview { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+    #preview-img {
+      width: 100%;
+      max-height: 280px;
+      object-fit: contain;
+      display: block;
+      padding: .75rem;
+    }
+
+    .preview-bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(8,11,18,.92));
+      padding: .75rem 1rem .6rem;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: .5rem;
+    }
+    .preview-info-text { pointer-events: none; }
+    .preview-info-text .fname {
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
+    }
+    .preview-info-text .fmeta {
+      font-size: .72rem;
+      color: var(--text2);
+      margin-top: .1rem;
+    }
+    .preview-change-btn {
+      flex-shrink: 0;
+      padding: .28rem .7rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      font-size: .72rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .15s;
+      z-index: 3;
+      position: relative;
+    }
+    .preview-change-btn:hover { background: rgba(255,255,255,.14); }
+
+    /* ── Settings panel ──────────────────────────────────────────── */
+    .settings-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .field-label {
+      display: block;
+      font-size: .72rem;
+      color: var(--text2);
+      margin-bottom: .55rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+    }
+
+    /* Method pills */
+    .pill-group { display: flex; flex-wrap: wrap; gap: .35rem; }
+    .pill-group input { display: none; }
+    .pill-group label {
+      padding: .32rem .8rem;
+      border-radius: 999px;
+      border: 1px solid var(--border2);
+      font-size: .8rem;
+      cursor: pointer;
+      transition: all .18s;
+      color: var(--text2);
+      background: var(--surface2);
+    }
+    .pill-group label:hover { border-color: var(--accent2); color: var(--accent2); }
+    .pill-group input:checked + label {
+      border-color: var(--accent);
+      background: rgba(99,102,241,.2);
+      color: #a5b4fc;
+      box-shadow: 0 0 0 1px rgba(99,102,241,.3);
+    }
+    .method-hint {
+      font-size: .73rem;
+      color: var(--text2);
+      line-height: 1.5;
+      margin-top: .5rem;
+    }
+    .method-hint b { color: var(--accent2); }
+
+    /* Feather slider */
+    .slider-wrap { display: flex; align-items: center; gap: .75rem; }
+    input[type=range] {
+      flex: 1;
+      accent-color: var(--accent);
+      cursor: pointer;
+      height: 4px;
+    }
+    .slider-val {
+      min-width: 2.2rem;
       text-align: right;
-      font-size: .9rem;
+      font-size: .88rem;
+      font-weight: 600;
       color: var(--accent2);
       font-variant-numeric: tabular-nums;
     }
 
-    /* ── Process button ──────────────────────────────────────── */
+    /* Toggle */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-size: .84rem;
+      color: var(--text2);
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-row input[type=checkbox] {
+      accent-color: var(--accent);
+      width: 15px; height: 15px;
+      cursor: pointer;
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Process button ───────────────────────────────────────────── */
     #process-btn {
       width: 100%;
-      padding: .85rem;
+      padding: .9rem 1.5rem;
       font-size: 1rem;
-      font-weight: 600;
+      font-weight: 700;
       border: none;
-      border-radius: var(--radius);
-      background: linear-gradient(135deg, var(--accent), #a855f7);
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
       color: #fff;
       cursor: pointer;
-      transition: opacity .2s, transform .1s;
+      transition: opacity .2s, transform .12s, box-shadow .2s;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: .5rem;
+      gap: .55rem;
+      letter-spacing: .01em;
+      box-shadow: 0 4px 20px rgba(99,102,241,.35);
+      position: relative;
+      overflow: hidden;
     }
-    #process-btn:hover:not(:disabled) { opacity: .9; }
-    #process-btn:active:not(:disabled) { transform: scale(.98); }
-    #process-btn:disabled { opacity: .45; cursor: not-allowed; }
+    #process-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.1) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    #process-btn:hover:not(:disabled) {
+      opacity: .92;
+      box-shadow: 0 6px 28px rgba(99,102,241,.5);
+      transform: translateY(-1px);
+    }
+    #process-btn:active:not(:disabled) { transform: translateY(0) scale(.98); }
+    #process-btn:disabled { opacity: .38; cursor: not-allowed; box-shadow: none; }
 
-    /* ── Spinner ─────────────────────────────────────────────── */
+    /* Spinner */
     .spinner {
       width: 18px; height: 18px;
       border: 2.5px solid rgba(255,255,255,.3);
       border-top-color: #fff;
       border-radius: 50%;
-      animation: spin .6s linear infinite;
+      animation: spin .65s linear infinite;
       display: none;
     }
-    .spinner.active { display: block; }
+    .spinner.on { display: block; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Status bar ──────────────────────────────────────────── */
-    #status {
-      font-size: .9rem;
-      min-height: 1.4em;
-      padding: .5rem .75rem;
-      border-radius: 8px;
-      display: none;
-    }
-    #status.info  { display: block; background: rgba(108,99,255,.15); color: var(--accent2); }
-    #status.ok    { display: block; background: rgba(34,197,94,.12);  color: var(--success); }
-    #status.error { display: block; background: rgba(239,68,68,.12);  color: var(--danger); }
-
-    /* ── Before / After viewer ───────────────────────────────── */
-    #result-section { display: none; }
-
-    .viewer-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
-    @media (max-width: 700px) {
-      .viewer-grid { grid-template-columns: 1fr; }
-    }
-
-    .image-box {
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      background: #0a0b10;
-      position: relative;
-    }
-    .image-box img {
-      width: 100%;
-      height: auto;
-      display: block;
-      max-height: 480px;
-      object-fit: contain;
-    }
-    .image-box .badge {
-      position: absolute;
-      top: .6rem; left: .6rem;
-      background: rgba(0,0,0,.7);
-      color: #fff;
-      font-size: .72rem;
-      font-weight: 600;
-      padding: .2rem .55rem;
-      border-radius: 999px;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-    }
-    .image-box .badge.after { background: rgba(108,99,255,.75); }
-
-    /* ── Download row ────────────────────────────────────────── */
-    .download-row {
-      display: flex;
-      gap: .75rem;
-      flex-wrap: wrap;
-      margin-top: 1rem;
-    }
-    .btn-dl {
-      padding: .55rem 1.25rem;
-      border-radius: 999px;
-      border: 1px solid var(--accent);
-      background: transparent;
-      color: var(--accent2);
-      font-size: .88rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background .15s;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: .4rem;
-    }
-    .btn-dl:hover { background: rgba(108,99,255,.15); }
-
-    /* ── Progress bar ────────────────────────────────────────── */
-    #progress-wrap {
+    /* ── Progress bar ─────────────────────────────────────────────── */
+    .progress-track {
       height: 3px;
       background: var(--border);
       border-radius: 2px;
       overflow: hidden;
+      margin-top: .75rem;
       display: none;
     }
+    .progress-track.on { display: block; }
     #progress-bar {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, var(--accent), #a855f7);
+      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+      background-size: 200% 100%;
+      animation: shimmer 1.5s ease-in-out infinite;
       transition: width .3s ease;
     }
-
-    /* ── Footer ──────────────────────────────────────────────── */
-    footer {
-      text-align: center;
-      padding: 1.25rem;
-      color: var(--muted);
-      font-size: .8rem;
-      border-top: 1px solid var(--border);
+    @keyframes shimmer {
+      0%   { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
     }
 
-    /* ── Checboxes row ───────────────────────────────────────── */
-    .toggle-row {
+    /* ── Status ───────────────────────────────────────────────────── */
+    #status {
+      font-size: .875rem;
+      padding: .55rem .85rem;
+      border-radius: var(--radius-sm);
+      margin-top: .75rem;
+      display: none;
+      align-items: center;
+      gap: .5rem;
+    }
+    #status.info  { display: flex; background: rgba(99,102,241,.12);  color: #a5b4fc; border: 1px solid rgba(99,102,241,.2); }
+    #status.ok    { display: flex; background: rgba(34,197,94,.1);   color: #4ade80; border: 1px solid rgba(34,197,94,.2); }
+    #status.error { display: flex; background: rgba(239,68,68,.1);   color: #f87171; border: 1px solid rgba(239,68,68,.2); }
+
+    /* ── Result card ──────────────────────────────────────────────── */
+    #result-section { display: none; }
+    .result-header {
+      padding: 1rem 1.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    .result-title {
+      font-size: .97rem;
+      font-weight: 700;
       display: flex;
       align-items: center;
       gap: .5rem;
-      font-size: .87rem;
-      color: var(--muted);
-      cursor: pointer;
     }
-    .toggle-row input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
-
-    .meta-row {
+    .result-meta {
       display: flex;
-      gap: 1rem;
+      gap: .85rem;
+      font-size: .78rem;
+      color: var(--text2);
       flex-wrap: wrap;
-      font-size: .8rem;
-      color: var(--muted);
-      margin-top: .5rem;
     }
-    .meta-row span { display: flex; gap: .3rem; align-items: center; }
-    .meta-row b { color: var(--text); }
+    .result-meta .chip {
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: .2rem .6rem;
+      border-radius: 999px;
+    }
+    .result-meta .chip b { color: var(--text); }
+
+    /* ── Before/After compare slider ─────────────────────────────── */
+    .compare-outer {
+      padding: 1.2rem 1.6rem;
+    }
+    .compare-wrap {
+      position: relative;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      user-select: none;
+      cursor: ew-resize;
+      background: #000;
+      max-height: 520px;
+      line-height: 0;
+    }
+    .compare-before-img {
+      width: 100%;
+      max-height: 520px;
+      object-fit: contain;
+      display: block;
+    }
+    .compare-after-wrap {
+      position: absolute;
+      top: 0; left: 0;
+      height: 100%;
+      overflow: hidden;
+      width: 50%;
+    }
+    .compare-after-img {
+      display: block;
+      width: 100%;        /* will be overridden by JS */
+      max-height: 520px;
+      object-fit: contain;
+    }
+    /* Divider line + handle */
+    .compare-divider {
+      position: absolute;
+      top: 0; bottom: 0;
+      left: 50%;
+      width: 2px;
+      background: rgba(255,255,255,.9);
+      transform: translateX(-50%);
+      pointer-events: none;
+      box-shadow: 0 0 8px rgba(0,0,0,.5);
+    }
+    .compare-handle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 16px rgba(0,0,0,.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .compare-handle svg { width: 20px; height: 20px; }
+
+    /* Before / After labels */
+    .compare-label {
+      position: absolute;
+      top: .7rem;
+      padding: .22rem .65rem;
+      border-radius: 999px;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+    .compare-label.before {
+      left: .7rem;
+      background: rgba(0,0,0,.65);
+      color: #fff;
+    }
+    .compare-label.after {
+      right: .7rem;
+      background: rgba(99,102,241,.8);
+      color: #fff;
+    }
+
+    /* ── Mask section ─────────────────────────────────────────────── */
+    #mask-section {
+      padding: 0 1.6rem 1.2rem;
+      display: none;
+    }
+    #mask-section .mask-img-wrap {
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      max-width: 360px;
+      background: #000;
+      border: 1px solid var(--border);
+    }
+    #mask-section img { width: 100%; display: block; }
+
+    /* ── Download row ─────────────────────────────────────────────── */
+    .action-row {
+      display: flex;
+      gap: .75rem;
+      flex-wrap: wrap;
+      padding: 1.2rem 1.6rem;
+      border-top: 1px solid var(--border);
+    }
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .55rem 1.3rem;
+      border-radius: 999px;
+      font-size: .86rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      text-decoration: none;
+    }
+    .btn-action.primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      box-shadow: 0 2px 12px rgba(99,102,241,.4);
+    }
+    .btn-action.primary:hover { background: #5254cc; }
+    .btn-action.ghost {
+      background: transparent;
+      color: var(--text2);
+      border: 1px solid var(--border2);
+    }
+    .btn-action.ghost:hover { border-color: var(--accent2); color: var(--accent2); }
+
+    /* ── Footer ───────────────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 1.5rem 1rem;
+      color: var(--text2);
+      font-size: .8rem;
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--accent2); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
 
+<!-- ── Header ──────────────────────────────────────────────────────── -->
 <header>
-  <h1>✦ Gemini Logo Remover</h1>
-  <p>Upload an image · remove the Gemini watermark · download the clean result</p>
+  <div class="header-sparkle">✦</div>
+  <h1>Gemini Logo Remover</h1>
+  <p>Detect and remove the Gemini watermark from any image — instantly</p>
+  <div class="header-badges">
+    <span class="badge-tag free">100% Free</span>
+    <span class="badge-tag local">Runs Locally</span>
+    <span class="badge-tag nokey">No API Key</span>
+    <span class="badge-tag fast">AI-Powered</span>
+  </div>
 </header>
 
 <main>
 
-  <!-- Upload + settings card -->
+  <!-- ── Upload + Settings card ──────────────────────────────────── -->
   <div class="card">
-    <!-- Drop zone -->
-    <div id="drop-zone">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12V4m0 0L9 7m3-3l3 3"/>
+    <div class="card-header">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
       </svg>
-      <p><strong>Drag &amp; drop</strong> your image here<br>or <u>click to browse</u></p>
-      <p id="file-name">PNG · JPG · WEBP · up to 30 MB</p>
-      <input type="file" id="file-input" accept="image/png,image/jpeg,image/webp" />
+      Upload Image
     </div>
+    <div class="card-body">
+      <div class="upload-layout">
 
-    <div style="height:1px; background:var(--border); margin:1.25rem 0;"></div>
+        <!-- Left: Drop zone with preview -->
+        <div>
+          <div id="drop-zone">
+            <!-- Empty state -->
+            <div class="upload-empty">
+              <div class="upload-icon-wrap">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.8">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+              </div>
+              <h3>Drop your image here</h3>
+              <p>or <span class="browse-link">click to browse</span></p>
+              <p>PNG · JPG · WEBP &nbsp;·&nbsp; up to 30 MB</p>
+            </div>
 
-    <!-- Settings -->
-    <div class="settings-grid">
-      <div>
-        <label class="field-label">Inpainting Method</label>
-        <div class="pill-group">
-          <input type="radio" name="method" id="m-auto"       value="auto"       checked>
-          <label for="m-auto">Auto</label>
-          <input type="radio" name="method" id="m-lama"       value="lama">
-          <label for="m-lama">LaMa ✦</label>
-          <input type="radio" name="method" id="m-biharmonic" value="biharmonic">
-          <label for="m-biharmonic">Biharmonic</label>
-          <input type="radio" name="method" id="m-telea"      value="telea">
-          <label for="m-telea">TELEA</label>
-          <input type="radio" name="method" id="m-ns"         value="ns">
-          <label for="m-ns">NS</label>
-          <input type="radio" name="method" id="m-gradient"   value="gradient">
-          <label for="m-gradient">Gradient</label>
-          <input type="radio" name="method" id="m-patch"      value="patch">
-          <label for="m-patch">Patch</label>
+            <!-- Preview state (shown after file selected) -->
+            <div class="upload-preview">
+              <img id="preview-img" src="" alt="Preview" />
+              <div class="preview-bar">
+                <div class="preview-info-text">
+                  <div class="fname" id="preview-fname">—</div>
+                  <div class="fmeta" id="preview-fmeta">—</div>
+                </div>
+                <button class="preview-change-btn" id="change-img-btn">Change</button>
+              </div>
+            </div>
+
+            <input type="file" id="file-input" accept="image/png,image/jpeg,image/webp" />
+          </div>
         </div>
-        <p style="font-size:.75rem; color:var(--muted); margin-top:.5rem;">
-          <b>Auto</b> picks the best available method.
-          <b>LaMa ✦</b> = AI model, best quality (~200 MB first run).
-          <b>Biharmonic</b> = smooth PDE fill, no neural net.
-          <b>Gradient</b> = perfect for solid/blurred backgrounds.
-          All classical methods use mirror-padding to fix corner artifacts.
-        </p>
-      </div>
 
-      <div>
-        <label class="field-label">Mask Feather</label>
-        <div class="slider-row">
-          <input type="range" id="feather" min="0" max="20" value="4" step="1">
-          <span id="feather-val">4</span> <span style="color:var(--muted); font-size:.8rem;">px</span>
-        </div>
-        <p style="font-size:.75rem; color:var(--muted); margin-top:.4rem;">
-          Higher = softer blend around the removed area.
-        </p>
+        <!-- Right: Settings -->
+        <div class="settings-panel">
 
-        <div style="margin-top:.9rem;">
+          <div>
+            <label class="field-label">Inpainting Method</label>
+            <div class="pill-group">
+              <input type="radio" name="method" id="m-auto"       value="auto"       checked>
+              <label for="m-auto">Auto</label>
+              <input type="radio" name="method" id="m-lama"       value="lama">
+              <label for="m-lama">LaMa ✦</label>
+              <input type="radio" name="method" id="m-biharmonic" value="biharmonic">
+              <label for="m-biharmonic">Biharmonic</label>
+              <input type="radio" name="method" id="m-telea"      value="telea">
+              <label for="m-telea">TELEA</label>
+              <input type="radio" name="method" id="m-ns"         value="ns">
+              <label for="m-ns">NS</label>
+              <input type="radio" name="method" id="m-gradient"   value="gradient">
+              <label for="m-gradient">Gradient</label>
+              <input type="radio" name="method" id="m-patch"      value="patch">
+              <label for="m-patch">Patch</label>
+            </div>
+            <p class="method-hint">
+              <b>Auto</b> analyses your background and picks the best method.
+              <b>LaMa ✦</b> = deep-learning model, best quality (~200 MB first run).
+              <b>Gradient</b> is perfect for solid / blurred backgrounds.
+            </p>
+          </div>
+
+          <div class="divider"></div>
+
+          <div>
+            <label class="field-label">Mask Feather</label>
+            <div class="slider-wrap">
+              <input type="range" id="feather" min="0" max="20" value="2" step="1">
+              <div class="slider-val"><span id="feather-val">2</span> <span style="font-size:.72rem;color:var(--text2);">px</span></div>
+            </div>
+            <p class="method-hint" style="margin-top:.4rem;">
+              Controls how softly the edges of the removed area are blended back.
+            </p>
+          </div>
+
+          <div class="divider"></div>
+
           <label class="toggle-row">
             <input type="checkbox" id="show-mask" />
             Show detection mask alongside result
           </label>
+
+          <div style="margin-top:auto; padding-top:.5rem;">
+            <button id="process-btn" disabled>
+              <div class="spinner" id="spinner"></div>
+              <svg id="btn-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+              </svg>
+              Remove Gemini Logo
+            </button>
+            <div class="progress-track" id="progress-track">
+              <div id="progress-bar"></div>
+            </div>
+            <div id="status"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Result card ──────────────────────────────────────────────── -->
+  <div class="card" id="result-section">
+    <div class="result-header">
+      <div class="result-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Logo Removed
+      </div>
+      <div class="result-meta" id="meta-row"></div>
+    </div>
+
+    <!-- Before / After drag-slider -->
+    <div class="compare-outer">
+      <div class="compare-wrap" id="compare-wrap">
+        <img class="compare-before-img" id="img-before" src="" alt="Before" draggable="false" />
+        <div class="compare-after-wrap" id="compare-after-wrap">
+          <img class="compare-after-img" id="img-after" src="" alt="After" draggable="false" />
+        </div>
+        <div class="compare-divider" id="compare-divider"></div>
+        <div class="compare-handle" id="compare-handle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6"/>
+            <polyline points="9 6 15 12 9 18" transform="translate(6,0)"/>
+          </svg>
+        </div>
+        <span class="compare-label before">Before</span>
+        <span class="compare-label after">After</span>
+      </div>
+      <p style="text-align:center; font-size:.75rem; color:var(--text2); margin-top:.65rem;">
+        ← Drag the slider to compare before and after →
+      </p>
+    </div>
+
+    <!-- Optional mask -->
+    <div id="mask-section">
+      <label class="field-label" style="padding:0 1.6rem .5rem;">Detection Mask</label>
+      <div style="padding:0 1.6rem;">
+        <div class="mask-img-wrap">
+          <img id="img-mask" src="" alt="Mask" />
         </div>
       </div>
     </div>
 
-    <div style="height:1px; background:var(--border); margin:1.25rem 0;"></div>
-
-    <!-- Progress + button -->
-    <div id="progress-wrap"><div id="progress-bar"></div></div>
-    <div style="height:.5rem;"></div>
-
-    <button id="process-btn" disabled>
-      <div class="spinner" id="spinner"></div>
-      <svg id="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="3 6 5 2 21 2 19 6"/><path d="M21 6H3l1 14h16z"/>
-      </svg>
-      Remove Logo
-    </button>
-
-    <div id="status" style="margin-top:.75rem;"></div>
-  </div>
-
-  <!-- Result section -->
-  <div class="card" id="result-section">
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
-      <h2 style="font-size:1rem; font-weight:600;">Result</h2>
-      <div class="meta-row" id="meta-row"></div>
-    </div>
-
-    <div class="viewer-grid">
-      <div class="image-box">
-        <span class="badge">Before</span>
-        <img id="img-before" src="" alt="Original" />
-      </div>
-      <div class="image-box">
-        <span class="badge after">After</span>
-        <img id="img-after" src="" alt="Cleaned" />
-      </div>
-    </div>
-
-    <!-- Mask -->
-    <div id="mask-section" style="display:none; margin-top:1rem;">
-      <label class="field-label">Detection Mask</label>
-      <div class="image-box" style="max-width:340px;">
-        <img id="img-mask" src="" alt="Mask" />
-      </div>
-    </div>
-
-    <div class="download-row">
-      <a id="dl-btn" class="btn-dl" download="cleaned.png">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <!-- Actions -->
+    <div class="action-row">
+      <a id="dl-btn" class="btn-action primary" download="cleaned.png">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
         </svg>
         Download PNG
       </a>
-      <button class="btn-dl" id="reset-btn" style="border-color:var(--border); color:var(--muted);">
-        ↺ Process another
+      <button class="btn-action ghost" id="reset-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.7"/>
+        </svg>
+        Try Another Image
       </button>
     </div>
   </div>
@@ -453,200 +792,244 @@
 </main>
 
 <footer>
-  All processing happens <strong>locally on your server</strong> — no image ever leaves your machine.
+  All processing happens <strong>locally on your machine</strong> — your images never leave your device. &nbsp;·&nbsp;
+  <a href="https://github.com/tanmoymondal1312/Gemini-Logo-Remover" target="_blank">GitHub ↗</a>
 </footer>
 
 <script>
 (function () {
-  const dropZone   = document.getElementById('drop-zone');
-  const fileInput  = document.getElementById('file-input');
-  const fileName   = document.getElementById('file-name');
-  const processBtn = document.getElementById('process-btn');
-  const spinner    = document.getElementById('spinner');
-  const btnIcon    = document.getElementById('btn-icon');
-  const status     = document.getElementById('status');
-  const progressWrap = document.getElementById('progress-wrap');
-  const progressBar  = document.getElementById('progress-bar');
-
-  const resultSection = document.getElementById('result-section');
-  const imgBefore   = document.getElementById('img-before');
-  const imgAfter    = document.getElementById('img-after');
-  const imgMask     = document.getElementById('img-mask');
-  const maskSection = document.getElementById('mask-section');
-  const dlBtn       = document.getElementById('dl-btn');
-  const metaRow     = document.getElementById('meta-row');
+  /* ── DOM refs ──────────────────────────────────────────────────── */
+  const dropZone      = document.getElementById('drop-zone');
+  const fileInput     = document.getElementById('file-input');
+  const previewImg    = document.getElementById('preview-img');
+  const previewFname  = document.getElementById('preview-fname');
+  const previewFmeta  = document.getElementById('preview-fmeta');
+  const changeImgBtn  = document.getElementById('change-img-btn');
+  const processBtn    = document.getElementById('process-btn');
+  const spinner       = document.getElementById('spinner');
+  const btnIcon       = document.getElementById('btn-icon');
+  const status        = document.getElementById('status');
+  const progressTrack = document.getElementById('progress-track');
+  const progressBar   = document.getElementById('progress-bar');
   const featherSlider = document.getElementById('feather');
   const featherVal    = document.getElementById('feather-val');
-  const resetBtn    = document.getElementById('reset-btn');
+  const resultSection = document.getElementById('result-section');
+  const imgBefore     = document.getElementById('img-before');
+  const imgAfter      = document.getElementById('img-after');
+  const imgMask       = document.getElementById('img-mask');
+  const maskSection   = document.getElementById('mask-section');
+  const dlBtn         = document.getElementById('dl-btn');
+  const metaRow       = document.getElementById('meta-row');
+  const resetBtn      = document.getElementById('reset-btn');
+
+  /* Compare slider */
+  const compareWrap      = document.getElementById('compare-wrap');
+  const compareAfterWrap = document.getElementById('compare-after-wrap');
+  const compareDivider   = document.getElementById('compare-divider');
+  const compareHandle    = document.getElementById('compare-handle');
 
   let selectedFile = null;
   let resultURL    = null;
 
-  // ── Feather display ──────────────────────────────────────────
+  /* ── Feather slider ─────────────────────────────────────────── */
   featherSlider.addEventListener('input', () => {
     featherVal.textContent = featherSlider.value;
   });
 
-  // ── File selection ───────────────────────────────────────────
+  /* ── File picking ────────────────────────────────────────────── */
   function pickFile(file) {
     if (!file || !file.type.startsWith('image/')) {
-      showStatus('error', 'Please select a valid image file (PNG / JPG / WEBP).');
+      showStatus('error', 'Please select a valid image (PNG / JPG / WEBP).');
       return;
     }
     if (file.size > 30 * 1024 * 1024) {
-      showStatus('error', 'File is too large. Maximum size is 30 MB.');
+      showStatus('error', 'File is too large. Maximum is 30 MB.');
       return;
     }
     selectedFile = file;
-    fileName.textContent = `${file.name}  (${(file.size / 1024).toFixed(0)} KB)`;
-    processBtn.disabled = false;
 
-    // Show original preview in Before pane
+    /* Show preview inside the drop zone */
     const url = URL.createObjectURL(file);
-    imgBefore.src = url;
-    showStatus('info', `Ready — click "Remove Logo" to process.`);
+    previewImg.src = url;
+    dropZone.classList.add('has-image');
+
+    /* File info */
+    previewFname.textContent = file.name;
+    const sizeStr = file.size > 1024 * 1024
+      ? (file.size / 1024 / 1024).toFixed(1) + ' MB'
+      : Math.round(file.size / 1024) + ' KB';
+
+    /* Read image dimensions */
+    const tmpImg = new Image();
+    tmpImg.onload = () => {
+      previewFmeta.textContent = `${tmpImg.naturalWidth} × ${tmpImg.naturalHeight} · ${sizeStr}`;
+      URL.revokeObjectURL(tmpImg.src);
+    };
+    tmpImg.src = url;
+
+    processBtn.disabled = false;
+    showStatus('info', 'Image loaded — click "Remove Gemini Logo" to process.');
   }
 
   fileInput.addEventListener('change', () => {
     if (fileInput.files[0]) pickFile(fileInput.files[0]);
   });
 
+  /* "Change" button inside preview acts as another file browse */
+  changeImgBtn.addEventListener('click', e => {
+    e.stopPropagation();   /* prevent drop-zone click from double-firing */
+    fileInput.click();
+  });
+
   dropZone.addEventListener('dragover', e => {
     e.preventDefault();
     dropZone.classList.add('drag-over');
   });
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  ['dragleave', 'dragend'].forEach(ev =>
+    dropZone.addEventListener(ev, () => dropZone.classList.remove('drag-over'))
+  );
   dropZone.addEventListener('drop', e => {
     e.preventDefault();
     dropZone.classList.remove('drag-over');
     if (e.dataTransfer.files[0]) pickFile(e.dataTransfer.files[0]);
   });
 
-  // ── Process ──────────────────────────────────────────────────
+  /* ── Process ─────────────────────────────────────────────────── */
   processBtn.addEventListener('click', async () => {
     if (!selectedFile) return;
 
-    const method  = document.querySelector('input[name=method]:checked').value;
-    const feather = featherSlider.value;
+    const method   = document.querySelector('input[name=method]:checked').value;
+    const feather  = featherSlider.value;
     const withMask = document.getElementById('show-mask').checked;
 
     setLoading(true);
-    showStatus('info', 'Processing… this may take a few seconds.');
+    showStatus('info', 'Detecting logo and rebuilding background…');
     resultSection.style.display = 'none';
-    maskSection.style.display = 'none';
+    maskSection.style.display   = 'none';
 
     const form = new FormData();
-    form.append('image', selectedFile);
+    form.append('image',  selectedFile);
     form.append('method', method);
     form.append('feather', feather);
 
     try {
       if (withMask) {
-        // JSON path with mask
         form.append('return_mask', 'true');
-        const t0 = performance.now();
         const res = await fetchWithProgress('/api/remove', form);
-
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({ detail: res.statusText }));
-          throw new Error(err.detail || 'Server error');
-        }
-
+        if (!res.ok) { const e = await res.json().catch(() => ({ detail: res.statusText })); throw new Error(e.detail || 'Server error'); }
         const data = await res.json();
-        const elapsed = data.elapsed_ms ?? Math.round(performance.now() - t0);
-
-        displayResult(
-          'data:image/png;base64,' + data.result,
-          data.elapsed_ms,
-          data.method,
-          method,
-        );
+        displayResult('data:image/png;base64,' + data.result, data.elapsed_ms, data.method);
         imgMask.src = 'data:image/png;base64,' + data.mask;
         maskSection.style.display = 'block';
-
       } else {
-        // Binary path (fastest)
-        const t0 = performance.now();
+        const t0  = performance.now();
         const res = await fetchWithProgress('/api/remove', form);
-
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({ detail: res.statusText }));
-          throw new Error(err.detail || 'Server error');
-        }
-
-        const blob = await res.blob();
+        if (!res.ok) { const e = await res.json().catch(() => ({ detail: res.statusText })); throw new Error(e.detail || 'Server error'); }
+        const blob      = await res.blob();
         const elapsedMs = res.headers.get('X-Elapsed-Ms') ?? Math.round(performance.now() - t0);
         const methodUsed = res.headers.get('X-Method') ?? method;
-
-        const url = URL.createObjectURL(blob);
-        displayResult(url, elapsedMs, methodUsed, method);
+        displayResult(URL.createObjectURL(blob), elapsedMs, methodUsed);
       }
-
     } catch (err) {
       showStatus('error', '✖  ' + err.message);
       setLoading(false);
     }
   });
 
-  function displayResult(url, elapsedMs, methodUsed, methodRequested) {
+  function displayResult(url, elapsedMs, methodUsed) {
     if (resultURL) URL.revokeObjectURL(resultURL);
     resultURL = url;
 
+    /* Set before image = the uploaded file preview */
+    imgBefore.src = previewImg.src;
+
+    /* Set after image */
     imgAfter.src = url;
-    dlBtn.href = url;
+    imgAfter.onload = () => syncCompareWidths();
+
+    /* Divider starts at 50 % */
+    setComparePct(50);
+
+    dlBtn.href     = url;
     dlBtn.download = selectedFile.name.replace(/\.[^.]+$/, '') + '_clean.png';
 
     metaRow.innerHTML = `
-      <span>Method <b>${methodUsed}</b></span>
-      <span>Time <b>${elapsedMs} ms</b></span>
+      <div class="chip"><span>Method</span><b>${methodUsed}</b></div>
+      <div class="chip"><span>Time</span><b>${elapsedMs} ms</b></div>
     `;
 
     resultSection.style.display = 'block';
-    showStatus('ok', `✓ Done in ${elapsedMs} ms using ${methodUsed}.`);
+    showStatus('ok', `✓ Logo removed in ${elapsedMs} ms using <b>${methodUsed}</b>`);
     setLoading(false);
-
-    // Smooth scroll to result
     resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  // ── Reset ────────────────────────────────────────────────────
+  /* ── Compare slider ──────────────────────────────────────────── */
+  function syncCompareWidths() {
+    /* After image must be exactly the same pixel width as before image
+       (both are displayed at the same CSS width by the container, so we
+       set the after-img width = the container pixel width). */
+    const w = compareWrap.getBoundingClientRect().width;
+    imgAfter.style.width = w + 'px';
+  }
+
+  function setComparePct(pct) {
+    pct = Math.max(2, Math.min(98, pct));
+    compareAfterWrap.style.width = pct + '%';
+    compareDivider.style.left    = pct + '%';
+    compareHandle.style.left     = pct + '%';
+  }
+
+  function getPctFromEvent(e) {
+    const rect = compareWrap.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    return ((clientX - rect.left) / rect.width) * 100;
+  }
+
+  let dragging = false;
+  compareWrap.addEventListener('mousedown',  e => { dragging = true; setComparePct(getPctFromEvent(e)); });
+  compareWrap.addEventListener('touchstart', e => { dragging = true; setComparePct(getPctFromEvent(e)); }, { passive: true });
+  document.addEventListener('mouseup',   () => { dragging = false; });
+  document.addEventListener('touchend',  () => { dragging = false; });
+  document.addEventListener('mousemove', e => { if (dragging) setComparePct(getPctFromEvent(e)); });
+  document.addEventListener('touchmove', e => { if (dragging) setComparePct(getPctFromEvent(e)); }, { passive: true });
+  window.addEventListener('resize', () => { if (imgAfter.src) syncCompareWidths(); });
+
+  /* ── Reset ───────────────────────────────────────────────────── */
   resetBtn.addEventListener('click', () => {
-    selectedFile = null;
+    selectedFile  = null;
     fileInput.value = '';
-    fileName.textContent = 'PNG · JPG · WEBP · up to 30 MB';
+    dropZone.classList.remove('has-image');
+    previewImg.src = '';
     processBtn.disabled = true;
     resultSection.style.display = 'none';
     status.className = '';
     status.style.display = 'none';
-    imgBefore.src = '';
-    imgAfter.src = '';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  // ── Helpers ──────────────────────────────────────────────────
+  /* ── Helpers ─────────────────────────────────────────────────── */
   function setLoading(on) {
     processBtn.disabled = on;
-    spinner.classList.toggle('active', on);
-    btnIcon.style.display = on ? 'none' : '';
-    progressWrap.style.display = on ? 'block' : 'none';
+    spinner.classList.toggle('on', on);
+    btnIcon.style.display      = on ? 'none' : '';
+    progressTrack.classList.toggle('on', on);
     if (!on) progressBar.style.width = '0%';
   }
 
-  function showStatus(type, msg) {
-    status.className = type;
-    status.textContent = msg;
-    status.style.display = 'block';
+  function showStatus(type, html) {
+    status.className   = type;
+    status.innerHTML   = html;
+    status.style.display = 'flex';
   }
 
   async function fetchWithProgress(url, formData) {
-    // Fake progress animation — XHR doesn't expose download progress for non-streamed binary
-    progressWrap.style.display = 'block';
     let pct = 0;
+    progressTrack.classList.add('on');
     const tick = setInterval(() => {
-      pct = Math.min(pct + Math.random() * 12, 85);
+      pct = Math.min(pct + Math.random() * 14, 82);
       progressBar.style.width = pct + '%';
-    }, 200);
-
+    }, 220);
     try {
       const res = await fetch(url, { method: 'POST', body: formData });
       clearInterval(tick);
@@ -659,6 +1042,5 @@
   }
 })();
 </script>
-
 </body>
 </html>
