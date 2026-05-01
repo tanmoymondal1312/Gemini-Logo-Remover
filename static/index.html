@@ -467,27 +467,27 @@
       user-select: none;
       cursor: ew-resize;
       background: #111;
-      line-height: 0;
+      /* Height is set explicitly by JS so both images can use height:100% */
+      height: 320px;
     }
-    /* Before image — defines the container height */
-    .compare-before-img {
-      display: block;
-      width: 100%;
-      height: auto;
-      max-height: 520px;
-      object-fit: contain;
-    }
-    /* After image — absolutely overlays the before image at identical size.
-       clip-path reveals only the left portion; right side stays hidden.
-       This is the correct pattern: no wrapper tricks, no JS width overrides. */
+    /*
+     * BOTH images are absolutely positioned and fill the container identically.
+     * object-fit:contain centres the image within the box with the same scale
+     * for before and after — guaranteed pixel-perfect alignment.
+     * JS calculates the correct container height from the image aspect ratio.
+     */
+    .compare-before-img,
     .compare-after-img {
       position: absolute;
-      top: 0; left: 0;
+      inset: 0;
       width: 100%;
       height: 100%;
       object-fit: contain;
       display: block;
-      clip-path: inset(0 50% 0 0);   /* start: show left half */
+    }
+    /* After image: clip-path reveals only the left portion */
+    .compare-after-img {
+      clip-path: inset(0 50% 0 0);
     }
     /* Divider line */
     .compare-divider {
@@ -939,11 +939,25 @@
     if (resultURL) URL.revokeObjectURL(resultURL);
     resultURL = url;
 
-    /* Set before image = the uploaded file preview */
+    /* Set images — before = original upload, after = cleaned result */
     imgBefore.src = previewImg.src;
+    imgAfter.src  = url;
 
-    /* Set after image */
-    imgAfter.src = url;
+    /* Set container height based on image aspect ratio so both images align */
+    function fitContainer() {
+      const nw = imgBefore.naturalWidth;
+      const nh = imgBefore.naturalHeight;
+      if (!nw || !nh) return;
+      const maxH  = Math.min(window.innerHeight * 0.6, 520);
+      const contW = compareWrap.offsetWidth || 800;
+      const h     = Math.min(Math.round(nh / nw * contW), maxH);
+      compareWrap.style.height = h + 'px';
+    }
+    if (imgBefore.complete && imgBefore.naturalWidth > 0) {
+      fitContainer();
+    } else {
+      imgBefore.addEventListener('load', fitContainer, { once: true });
+    }
 
     /* Divider starts at 50 % */
     setComparePct(50);
@@ -989,6 +1003,15 @@
   document.addEventListener('touchend',  () => { dragging = false; });
   document.addEventListener('mousemove', e => { if (dragging) setComparePct(pctFromEvent(e)); });
   document.addEventListener('touchmove', e => { if (dragging) setComparePct(pctFromEvent(e)); }, { passive: true });
+
+  /* Recalculate container height on window resize */
+  window.addEventListener('resize', () => {
+    if (!imgBefore.src || !imgBefore.naturalWidth) return;
+    const maxH  = Math.min(window.innerHeight * 0.6, 520);
+    const contW = compareWrap.offsetWidth || 800;
+    const h     = Math.min(Math.round(imgBefore.naturalHeight / imgBefore.naturalWidth * contW), maxH);
+    compareWrap.style.height = h + 'px';
+  });
 
   /* ── Reset ───────────────────────────────────────────────────── */
   resetBtn.addEventListener('click', () => {
