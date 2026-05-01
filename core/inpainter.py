@@ -310,6 +310,29 @@ def inpaint_patch(image_bgr: np.ndarray,
 METHODS = ("auto", "lama", "telea", "ns", "gradient", "biharmonic", "patch")
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Background complexity estimator
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _bg_complexity(image_bgr: np.ndarray, mask: np.ndarray) -> float:
+    """
+    Measure the texture complexity of the background immediately surrounding
+    the mask.
+
+    Uses mean absolute Laplacian response on the border ring.
+    Low  (<  8) → solid colour / smooth gradient  → gradient fill is perfect
+    High (>= 8) → photo / complex texture          → biharmonic / LaMa needed
+    """
+    k     = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (27, 27))
+    ring  = cv2.dilate(mask, k) & ~mask
+    if ring.sum() < 30:
+        return 99.0   # can't measure → assume complex
+
+    gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY).astype(np.float32)
+    lap  = cv2.Laplacian(gray, cv2.CV_32F)
+    return float(np.abs(lap[ring > 0]).mean())
+
+
 def inpaint(image_bgr: np.ndarray,
             mask: np.ndarray,
             method: str = "auto") -> tuple[np.ndarray, str]:
@@ -319,7 +342,7 @@ def inpaint(image_bgr: np.ndarray,
     Parameters
     ----------
     method : one of METHODS
-        'auto'       → lama → biharmonic → telea+poisson+blend  (progressive)
+        'auto'       → smart auto (analyses background type, picks best method)
         'lama'       → LaMa deep model   (best; needs simple-lama-inpainting)
         'telea'      → mirror-padded TELEA + Poisson + soft blend
         'ns'         → mirror-padded Navier-Stokes   + Poisson + soft blend
@@ -332,17 +355,27 @@ def inpaint(image_bgr: np.ndarray,
     (result_bgr, method_name_used)
     """
     if method == "auto":
-        # 1. LaMa – deep learning, best quality
+        # 1. LaMa – deep learning, always best
         result = inpaint_lama(image_bgr, mask)
         if result is not None:
             return result, "lama"
 
-        # 2. Biharmonic – excellent, no neural net
+        # 2. Smart selection based on background complexity
+        complexity = _bg_complexity(image_bgr, mask)
+        print(f"[inpaint]  BG complexity={complexity:.2f} "
+              f"({'simple' if complexity < 8 else 'complex'})")
+
+        if complexity < 8.0:
+            # Simple / gradient background → polynomial gradient is near-perfect
+            result = inpaint_gradient(image_bgr, mask)
+            return _soft_blend(image_bgr, result, mask), "gradient"
+
+        # Complex background → biharmonic PDE
         result = inpaint_biharmonic(image_bgr, mask)
         if result is not None:
             return _soft_blend(image_bgr, result, mask), "biharmonic"
 
-        # 3. Mirror-padded TELEA + Poisson seamless clone + soft blend
+        # 3. Fallback: mirror-padded TELEA + Poisson + soft blend
         raw    = inpaint_telea(image_bgr, mask)
         result = _poisson_blend(image_bgr, raw, mask)
         if result is None:
