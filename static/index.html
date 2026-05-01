@@ -466,30 +466,30 @@
       overflow: hidden;
       user-select: none;
       cursor: ew-resize;
-      background: #000;
-      max-height: 520px;
+      background: #111;
       line-height: 0;
     }
+    /* Before image — defines the container height */
     .compare-before-img {
+      display: block;
       width: 100%;
+      height: auto;
       max-height: 520px;
       object-fit: contain;
-      display: block;
     }
-    .compare-after-wrap {
+    /* After image — absolutely overlays the before image at identical size.
+       clip-path reveals only the left portion; right side stays hidden.
+       This is the correct pattern: no wrapper tricks, no JS width overrides. */
+    .compare-after-img {
       position: absolute;
       top: 0; left: 0;
+      width: 100%;
       height: 100%;
-      overflow: hidden;
-      width: 50%;
-    }
-    .compare-after-img {
-      display: block;
-      width: 100%;        /* will be overridden by JS */
-      max-height: 520px;
       object-fit: contain;
+      display: block;
+      clip-path: inset(0 50% 0 0);   /* start: show left half */
     }
-    /* Divider line + handle */
+    /* Divider line */
     .compare-divider {
       position: absolute;
       top: 0; bottom: 0;
@@ -498,21 +498,23 @@
       background: rgba(255,255,255,.9);
       transform: translateX(-50%);
       pointer-events: none;
-      box-shadow: 0 0 8px rgba(0,0,0,.5);
+      box-shadow: 0 0 10px rgba(0,0,0,.6);
     }
+    /* Drag handle */
     .compare-handle {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 42px; height: 42px;
+      width: 44px; height: 44px;
       border-radius: 50%;
       background: #fff;
-      box-shadow: 0 2px 16px rgba(0,0,0,.5);
+      box-shadow: 0 2px 18px rgba(0,0,0,.55);
       display: flex;
       align-items: center;
       justify-content: center;
       pointer-events: none;
+      transition: transform .1s;
     }
     .compare-handle svg { width: 20px; height: 20px; }
 
@@ -535,7 +537,7 @@
     }
     .compare-label.after {
       right: .7rem;
-      background: rgba(99,102,241,.8);
+      background: rgba(99,102,241,.82);
       color: #fff;
     }
 
@@ -744,11 +746,9 @@
     <div class="compare-outer">
       <div class="compare-wrap" id="compare-wrap">
         <img class="compare-before-img" id="img-before" src="" alt="Before" draggable="false" />
-        <div class="compare-after-wrap" id="compare-after-wrap">
-          <img class="compare-after-img" id="img-after" src="" alt="After" draggable="false" />
-        </div>
+        <img class="compare-after-img"  id="img-after"  src="" alt="After"  draggable="false" />
         <div class="compare-divider" id="compare-divider"></div>
-        <div class="compare-handle" id="compare-handle">
+        <div class="compare-handle"  id="compare-handle">
           <svg viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5">
             <polyline points="15 18 9 12 15 6"/>
             <polyline points="9 6 15 12 9 18" transform="translate(6,0)"/>
@@ -823,10 +823,9 @@
   const resetBtn      = document.getElementById('reset-btn');
 
   /* Compare slider */
-  const compareWrap      = document.getElementById('compare-wrap');
-  const compareAfterWrap = document.getElementById('compare-after-wrap');
-  const compareDivider   = document.getElementById('compare-divider');
-  const compareHandle    = document.getElementById('compare-handle');
+  const compareWrap    = document.getElementById('compare-wrap');
+  const compareDivider = document.getElementById('compare-divider');
+  const compareHandle  = document.getElementById('compare-handle');
 
   let selectedFile = null;
   let resultURL    = null;
@@ -945,7 +944,6 @@
 
     /* Set after image */
     imgAfter.src = url;
-    imgAfter.onload = () => syncCompareWidths();
 
     /* Divider starts at 50 % */
     setComparePct(50);
@@ -965,35 +963,32 @@
   }
 
   /* ── Compare slider ──────────────────────────────────────────── */
-  function syncCompareWidths() {
-    /* After image must be exactly the same pixel width as before image
-       (both are displayed at the same CSS width by the container, so we
-       set the after-img width = the container pixel width). */
-    const w = compareWrap.getBoundingClientRect().width;
-    imgAfter.style.width = w + 'px';
-  }
-
+  /*
+   * Both images share the same rendered size (before: block flow; after:
+   * position:absolute filling the same box).  We use CSS clip-path on the
+   * after image to reveal only the left portion — this is reliable and
+   * needs zero JS width arithmetic.
+   */
   function setComparePct(pct) {
-    pct = Math.max(2, Math.min(98, pct));
-    compareAfterWrap.style.width = pct + '%';
+    pct = Math.max(1, Math.min(99, pct));
+    imgAfter.style.clipPath      = `inset(0 ${100 - pct}% 0 0)`;
     compareDivider.style.left    = pct + '%';
     compareHandle.style.left     = pct + '%';
   }
 
-  function getPctFromEvent(e) {
-    const rect = compareWrap.getBoundingClientRect();
+  function pctFromEvent(e) {
+    const rect    = compareWrap.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     return ((clientX - rect.left) / rect.width) * 100;
   }
 
   let dragging = false;
-  compareWrap.addEventListener('mousedown',  e => { dragging = true; setComparePct(getPctFromEvent(e)); });
-  compareWrap.addEventListener('touchstart', e => { dragging = true; setComparePct(getPctFromEvent(e)); }, { passive: true });
+  compareWrap.addEventListener('mousedown',  e => { dragging = true; setComparePct(pctFromEvent(e)); });
+  compareWrap.addEventListener('touchstart', e => { dragging = true; setComparePct(pctFromEvent(e)); }, { passive: true });
   document.addEventListener('mouseup',   () => { dragging = false; });
   document.addEventListener('touchend',  () => { dragging = false; });
-  document.addEventListener('mousemove', e => { if (dragging) setComparePct(getPctFromEvent(e)); });
-  document.addEventListener('touchmove', e => { if (dragging) setComparePct(getPctFromEvent(e)); }, { passive: true });
-  window.addEventListener('resize', () => { if (imgAfter.src) syncCompareWidths(); });
+  document.addEventListener('mousemove', e => { if (dragging) setComparePct(pctFromEvent(e)); });
+  document.addEventListener('touchmove', e => { if (dragging) setComparePct(pctFromEvent(e)); }, { passive: true });
 
   /* ── Reset ───────────────────────────────────────────────────── */
   resetBtn.addEventListener('click', () => {
